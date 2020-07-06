@@ -3,9 +3,11 @@ import numpy as np
 from src.rlagent import RLAgent
 
 class DDPGAgent(RLAgent):
-    def __init__(self, networks, epsilon, exp_replay, n_actions, n_steps, n_batch, n_exp_replay, gamma, rl_stats, mode, updates):
-        super().__init__(networks, epsilon, exp_replay, n_actions, n_steps, n_batch, n_exp_replay, gamma, rl_stats, mode, updates) 
-        
+    def __init__(self, networks, epsilon, exp_replay, n_actions, n_steps,
+                 n_batch, n_exp_replay, gamma, rl_stats, mode, updates):
+        super().__init__(networks, epsilon, exp_replay, n_actions, n_steps,
+                         n_batch, n_exp_replay, gamma, rl_stats, mode, updates)
+
     def get_action(self, state):
 
         if self.mode == 'train':
@@ -45,18 +47,18 @@ class DDPGAgent(RLAgent):
         self.send_weights('online')
 
         #update online with target params periodically
-        if self.rl_stats['updates'] % update_freq == 0: 
-            self.networks['actor'].transfer_weights()    
+        if self.rl_stats['updates'] % update_freq == 0:
+            self.networks['actor'].transfer_weights()
             self.networks['critic'].transfer_weights()
 
     def process_batch(self, sample_batch):
         #batch compute bootstrap
         next_states, terminals = [], []
         for trajectory in sample_batch:
-            ###normalize reward by comparison to maximum reward  
-            ###agent has experienced across all actors              
-            next_states.append(trajectory[-1]['next_s'])                       
-            terminals.append(trajectory[-1]['terminal'])                       
+            ###normalize reward by comparison to maximum reward
+            ###agent has experienced across all actors
+            next_states.append(trajectory[-1]['next_s'])
+            terminals.append(trajectory[-1]['terminal'])
 
         R = self.next_state_bootstrap(np.stack(next_states), np.stack(terminals))
         #compute targets
@@ -68,13 +70,13 @@ class DDPGAgent(RLAgent):
             for exp in trajectory:
                 states.append(exp['s'])
                 actions.append(exp['a'])
-                ###normalize reward by comparison to maximum reward 
+                ###normalize reward by comparison to maximum reward
                 ###agent has experienced across all actors
                 rewards.append(exp['r']/max_r)
             targets.extend( self.process_trajectory( rewards, r ) )
-                                                                                         
+
         if self.n_steps > 1:
-            idx = np.random.randint(0, len(targets), size = self.n_batch) 
+            idx = np.random.randint(0, len(targets), size = self.n_batch)
             _states, _actions, _targets = [], [], []
             for i in idx:
                 _states.append(states[i])
@@ -86,11 +88,11 @@ class DDPGAgent(RLAgent):
 
     def next_state_bootstrap(self, next_states, terminals):
         #batch next action
-        bootstrap_actions = self.networks['actor'].forward(next_states, 'target') 
+        bootstrap_actions = self.networks['actor'].forward(next_states, 'target')
         #batch next state action bootstrap
         R = self.networks['critic'].forward(next_states, bootstrap_actions, 'target')
 
-        return [ 0.0 if t is True else r[0] for t, r in zip(terminals, R)] 
+        return [ 0.0 if t is True else r[0] for t, r in zip(terminals, R)]
 
     def process_trajectory(self, rewards, R):
         #targets = self.compute_targets(rewards, R)

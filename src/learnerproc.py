@@ -25,12 +25,12 @@ class LearnerProc(Process):
         self.replay_fp =  self.args.save_replay+'/'+self.args.tsc+'/'
         #for saving agent progress
         if self.idx == 0:
-            path = 'tmp/'                                                                    
+            path = 'tmp/'
             check_and_make_dir(path)
             now = get_time_now()
-            self.updates_path = path + str(self.args.tsc)+'_'+str(now)+'_agent_updates.csv' 
-            self.replay_path = path + str(self.args.tsc)+'_'+str(now)+'_agent_replay.csv' 
-            self.n_exp_path = path + str(self.args.tsc)+'_'+str(now)+'_agent_nexp.csv' 
+            self.updates_path = path + str(self.args.tsc)+'_'+str(now)+'_agent_updates.csv'
+            self.replay_path = path + str(self.args.tsc)+'_'+str(now)+'_agent_replay.csv'
+            self.n_exp_path = path + str(self.args.tsc)+'_'+str(now)+'_agent_nexp.csv'
             self.tsc_ids = list(sorted(list(self.netdata['inter'].keys())))
             #write header line with tsc names
             write_line_to_file( self.updates_path, 'a+', ','.join([now]+self.tsc_ids) )
@@ -40,10 +40,10 @@ class LearnerProc(Process):
     def run(self):
         #gen neural networks
         learner = True
-        
-        neural_networks = gen_neural_networks(self.args, 
-                                              self.netdata, 
-                                              self.args.tsc, 
+
+        neural_networks = gen_neural_networks(self.args,
+                                              self.netdata,
+                                              self.args.tsc,
                                               self.agent_ids,
                                               learner,
                                               self.args.load,
@@ -52,7 +52,7 @@ class LearnerProc(Process):
         print('learner proc trying to send weights------------')
         write_to_log(' LEARNER #'+str(self.idx)+' SENDING WEIGHTS...')
 
-        neural_networks = self.distribute_weights(neural_networks) 
+        neural_networks = self.distribute_weights(neural_networks)
         #wait for all procs to sync weights
         print('learner waiting at barrier ------------')
         write_to_log(' LEARNER #'+str(self.idx)+' FINISHED SENDING WEIGHTS, WAITING AT BARRIER...')
@@ -79,7 +79,7 @@ class LearnerProc(Process):
             for tsc in self.agent_ids:
                 #wait until exp replay buffer full
                 if len(self.exp_replay[tsc]) >= self.args.nreplay:
-                    #reset the number of experiences once when the 
+                    #reset the number of experiences once when the
                     #exp replay is filled for the first time
                     if self.rl_stats[tsc]['updates'] == 0:
                         if self.args.save:
@@ -87,7 +87,7 @@ class LearnerProc(Process):
                         print(tsc+' exp replay full, beginning batch updates********')
                         #write_to_log(' LEARNER #'+str(self.idx)+' START LEARNING '+str(tsc))
                         self.rl_stats[tsc]['n_exp'] = len(self.exp_replay[tsc])
-                    if self.rl_stats[tsc]['updates'] < self.args.updates and self.rl_stats[tsc]['n_exp'] > 0: 
+                    if self.rl_stats[tsc]['updates'] < self.args.updates and self.rl_stats[tsc]['n_exp'] > 0:
                         for i in range(min(self.rl_stats[tsc]['n_exp'], 4)):
                            agents[tsc].train_batch(self.args.target_freq)
                         agents[tsc].clip_exp_replay()
@@ -98,7 +98,8 @@ class LearnerProc(Process):
                 n_replay = [str(len(self.exp_replay[i])) for i in self.agent_ids]
                 updates = [str(self.rl_stats[i]['updates']) for i in self.agent_ids]
                 nexp = [str(self.rl_stats[i]['n_exp']) for i in self.agent_ids]
-                write_to_log(' LEARNER #'+str(self.idx)+'\n'+str(self.agent_ids)+'\n'+str(nexp)+'\n'+str(n_replay)+'\n'+str(updates))                           
+                write_to_log(' LEARNER #'+str(self.idx)+'\n'+str(self.agent_ids)+\
+                             '\n'+str(nexp)+'\n'+str(n_replay)+'\n'+str(updates))
 
 
             #save weights periodically
@@ -129,7 +130,7 @@ class LearnerProc(Process):
         write_to_log(' LEARNER #'+str(self.idx)+' FINISHED UPDATES'+str(updates))
 
     def time_to_save(self):
-        t = time.time()                        
+        t = time.time()
         if t - self.save_t > self.args.save_t:
             self.save_t = t
             return True
@@ -150,15 +151,15 @@ class LearnerProc(Process):
         agents = {}
         for agent in self.agent_ids:
             n_actions = 1 if self.args.tsc == 'ddpg' else len(self.netdata['inter'][agent]['green_phases'])
-            agents[agent] = rl_factory(self.args.tsc, 
-                                       self.args, 
-                                       neural_networks[agent], 
-                                       self.exp_replay[agent], 
-                                       self.rl_stats[agent], 
+            agents[agent] = rl_factory(self.args.tsc,
+                                       self.args,
+                                       neural_networks[agent],
+                                       self.exp_replay[agent],
+                                       self.rl_stats[agent],
                                        n_actions,
                                        self.args.eps)
         return agents
-        
+
     def distribute_weights(self, neural_networks):
         for nn in neural_networks:
             if self.args.tsc == 'ddpg':
@@ -192,7 +193,8 @@ class LearnerProc(Process):
                 neural_networks[nn].save_weights('online', path, nn)
             else:
                 #raise not found exceptions
-                assert 0, 'Supplied RL traffic signal controller '+str(self.args.tsc)+' does not exist, cannot save.'
+                assert 0, 'Supplied RL traffic signal controller '+str(self.args.tsc)+\
+                    ' does not exist, cannot save.'
 
     def write_training_progress(self):
         updates = [str(self.rl_stats[i]['updates']) for i in self.tsc_ids]
@@ -208,24 +210,26 @@ class LearnerProc(Process):
 
     def save_replays(self):
         check_and_make_dir(self.replay_fp)
-        for _id in self.agent_ids:                                     
+        for _id in self.agent_ids:
             save_data(self.replay_fp+_id+'.p', [ _ for _ in self.exp_replay[_id]])
             print('FINISHED SAVING REPLAY FOR '+str(_id))
 
     def load_replays(self):
         for _id in self.agent_ids:
-            replay_fp = self.replay_fp+_id+'.p' 
+            replay_fp = self.replay_fp+_id+'.p'
             if os.path.isfile(replay_fp):
                 data = load_data(replay_fp)
                 rewards = []
                 for traj in data:
                     for exp in traj:
                         rewards.append(abs(exp['r']))
-                    self.exp_replay[_id].append(traj) 
+                    self.exp_replay[_id].append(traj)
                 #find largest reward to reward normalization
-                print('mean '+str(np.mean(rewards))+' std '+str(np.std(rewards))+' median '+str(np.median(rewards)))
+                print('mean '+str(np.mean(rewards))+' std '+str(np.std(rewards))+\
+                      ' median '+str(np.median(rewards)))
                 self.rl_stats[_id]['r_max'] = max(rewards)
                 print(str(self.idx)+' LARGEST REWARD '+str(self.rl_stats[_id]['r_max']))
                 print('SUCCESSFULLY LOADED REPLAY FOR '+str(_id))
             else:
-                print('WARNING, tried to load experience replay at '+str(replay_fp)+' but it does not exist, continuing without loading...')
+                print('WARNING, tried to load experience replay at '+str(replay_fp)+\
+                      ' but it does not exist, continuing without loading...')

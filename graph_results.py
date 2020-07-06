@@ -31,7 +31,7 @@ def main():
         graph_travel_time(labels, colours, fp, args.save_dir)
         metrics = ['queue', 'delay']
         graph_individual_intersections(labels, colours, fp, metrics, args.save_dir)
-    elif args.type == 'hp': 
+    elif args.type == 'hp':
         fp = 'hp/'
         graph_hyper_params(labels, colours, fp, args.save_dir)
     else:
@@ -49,11 +49,11 @@ def parse_cl_args():
 def graph_hyper_params(labels, colours, fp, save_dir):
     tsc = os.listdir(fp)
     tsc_hp = {}
-                                                                                                                   
+
     #get data
     for t in tsc:
         tsc_fp = fp+t+'/'
-        data = [ load_data(tsc_fp+f) for f in os.listdir(tsc_fp)]                                                 
+        data = [ load_data(tsc_fp+f) for f in os.listdir(tsc_fp)]
         tsc_hp[t] = np.stack([ [np.mean(d), np.std(d)] for d in data]).T
 
     #create appropriate graph
@@ -62,11 +62,11 @@ def graph_hyper_params(labels, colours, fp, save_dir):
         f, axes = plt.subplots()
         axes = [axes]
     else:
-        nrows = 2 
+        nrows = 2
         ncols = int(n/nrows) if n%nrows == 0 else int((n+1)/nrows)
         f, axes = plt.subplots(nrows=nrows,ncols=ncols)
         axes = axes.flat
-    
+
     if n%nrows != 0:
         f.delaxes(axes[-1])
 
@@ -75,21 +75,21 @@ def graph_hyper_params(labels, colours, fp, save_dir):
 
     #graph each tsc hyperparemeter
     for ax, t, i in zip(axes, tsc, range(len(tsc))):
-        #order hp performance from low to high 
+        #order hp performance from low to high
         #w.r.t mean+std
-        mean_data = tsc_hp[t][0] 
+        mean_data = tsc_hp[t][0]
         std_data = tsc_hp[t][1]
         data = sorted([ (m+s, m, s) for m,s in zip(mean_data, std_data) ], key = lambda x:x[0] )
         data = np.stack([ [d[1], d[2]] for d in data]).T
         mean_data = data[0]
         std_data = data[1]
 
-        #rainbow_colours = mp.cm.rainbow(np.linspace(0, 1, len(mean_data)))                          
+        #rainbow_colours = mp.cm.rainbow(np.linspace(0, 1, len(mean_data)))
 
-        rg_colours = mp.cm.brg(np.linspace(1.0, 0.5, len(mean_data)))                          
+        rg_colours = mp.cm.brg(np.linspace(1.0, 0.5, len(mean_data)))
         if i%ncols == 0 and i >= len(tsc)/2:
-            xtitle = XTITLE 
-            ytitle = YTITLE 
+            xtitle = XTITLE
+            ytitle = YTITLE
         elif i%ncols == 0:
             xtitle = ''
             ytitle = YTITLE
@@ -99,14 +99,14 @@ def graph_hyper_params(labels, colours, fp, save_dir):
         else:
             xtitle = ''
             ytitle = ''
-        #graph each tsc hp performance 
-        graph( ax, mean_data, scatter( ax, mean_data, std_data, rg_colours, ['']*len(mean_data)), 
-                                  xtitle=xtitle,                                 
-                                  ytitle_pad = ytitle,       
-                                  title=str(labels[t]),        
-                                  xlim = [0.0, max(mean_data)*1.05],                          
-                                  ylim= [0.0, max(std_data)*1.05],                            
-                                  grid=True)                                                  
+        #graph each tsc hp performance
+        graph( ax, mean_data, scatter( ax, mean_data, std_data, rg_colours, ['']*len(mean_data)),
+                                  xtitle=xtitle,
+                                  ytitle_pad = ytitle,
+                                  title=str(labels[t]),
+                                  xlim = [0.0, max(mean_data)*1.05],
+                                  ylim= [0.0, max(std_data)*1.05],
+                                  grid=True)
 
     #axis colourbar
     cax = f.add_axes([0.915, 0.1, 0.05, 0.85])
@@ -125,9 +125,9 @@ def graph_hyper_params(labels, colours, fp, save_dir):
     cb_labels[-1] = 'Worst'
     cb.ax.set_yticklabels(cb_labels)
 
-    f.suptitle('Hyperparameter Performance')                                                            
+    f.suptitle('Hyperparameter Performance')
     save_graph(f, save_dir+'tsc_hp.pdf', 600, 14, 24.9)
-    plt.show()                                                                            
+    plt.show()
 
     #now compare all tsc hp sets together in one graph
     #prepare data
@@ -151,7 +151,7 @@ def graph_hyper_params(labels, colours, fp, save_dir):
                               ylim= [0.0, 200.0],
                               #xlim = [0.0, max(mean_data)*1.05],
                               #ylim= [0.0, max(std_data)*1.05],
-                              #legend=(0.82, 0.72),                                   
+                              #legend=(0.82, 0.72),
                               #colours=colours,
                               grid=True)
 
@@ -168,52 +168,52 @@ def graph_hyper_params(labels, colours, fp, save_dir):
     plt.show()
 
 def graph_travel_time(labels, colours, fp, save_dir):
-    #read metric data for all tsc types                                           
-    data = get_data(fp, 'traveltime', get_folder_data)                               
-    #prepare data for graph                                                          
-    data_order = sorted(data.keys())                                                 
-    data = [ data[d] for d in data_order]                                           
-    labels = [ labels[d] for d in data_order]                                       
-    c = [ colours[d] for d in data_order]                                       
-    #graph data                                                                      
-    f, ax = plt.subplots(1,1)                                                        
+    #read metric data for all tsc types
+    data = get_data(fp, 'traveltime', get_folder_data)
+    #prepare data for graph
+    data_order = sorted(data.keys())
+    data = [ data[d] for d in data_order]
+    labels = [ labels[d] for d in data_order]
+    c = [ colours[d] for d in data_order]
+    #graph data
+    f, ax = plt.subplots(1,1)
     t = 'Travel Time '+r"$(s)$"+'\n('+r"$\mu,\sigma,$"+'median'+r"$)$"
-    graph( ax, data, boxplot( ax, data, c, labels),                            
-                              xtitle='Traffic Signal Controller',                    
-                              #ytitle_pad = ('Travel Time (s)\n('+r"/mu,/sigma,"+"median)", 60),                      
-                              ytitle_pad = (t, 60),                      
-                              title='Traffic Signal Controller\nTravel Time) ',     
-                              legend=(0.82, 0.72),                                   
-                              grid=True)                                             
+    graph( ax, data, boxplot( ax, data, c, labels),
+                              xtitle='Traffic Signal Controller',
+                              #ytitle_pad = ('Travel Time (s)\n('+r"/mu,/sigma,"+"median)", 60),
+                              ytitle_pad = (t, 60),
+                              title='Traffic Signal Controller\nTravel Time) ',
+                              legend=(0.82, 0.72),
+                              grid=True)
 
     for i, d in enumerate(data_order):
         text = '('+str(int(np.mean(data[i])))+', '+str(int( np.std(data[i]) ) )+', '+str(int( np.median(data[i]) ) )+r"$)$"
         ax.text(i+1.1, 300, text, color= c[i])
 
-    #f.suptitle('Travel Time')                                                        
-    #display graph                                                                   
+    #f.suptitle('Travel Time')
+    #display graph
     save_graph(f, save_dir+'travel_time.pdf', 600, 14, 24.9)
-    plt.show()                                                                       
+    plt.show()
 
 def graph_conf_interval(labels, colours, fp, metric):
-    #read metric data for all tsc types                               
-    data = get_data(fp, metric, get_metric_data)                         
-    #prepare data for graph                                              
-    data_order = sorted(data.keys())                                     
-    data = [ data[d]  for d in data_order]                               
-    labels = [ labels[d]  for d in data_order]                           
-    #graph data                                                          
-    f, ax = plt.subplots(1,1)                                            
-    metric_title = metric.capitalize()                                   
-    graph( ax, data, multi_line_with_CI( ax, data, colours, labels),     
-           xtitle='Time (s)',                                            
-           ytitle_pad = (metric_title, 60),                              
-           title=metric_title+' by\nTraffic Signal Controller',          
-           legend=(0.72, 0.72),                                          
-           grid=True)                                                    
-    #f.suptitle(metric_title)                                             
-    #display graph                                                       
-    plt.show()                                                           
+    #read metric data for all tsc types
+    data = get_data(fp, metric, get_metric_data)
+    #prepare data for graph
+    data_order = sorted(data.keys())
+    data = [ data[d]  for d in data_order]
+    labels = [ labels[d]  for d in data_order]
+    #graph data
+    f, ax = plt.subplots(1,1)
+    metric_title = metric.capitalize()
+    graph( ax, data, multi_line_with_CI( ax, data, colours, labels),
+           xtitle='Time (s)',
+           ytitle_pad = (metric_title, 60),
+           title=metric_title+' by\nTraffic Signal Controller',
+           legend=(0.72, 0.72),
+           grid=True)
+    #f.suptitle(metric_title)
+    #display graph
+    plt.show()
 
 def get_data(fp, metric, read_data_func):
     tsc = os.listdir(fp)
@@ -222,11 +222,11 @@ def get_data(fp, metric, read_data_func):
 
 def get_metric_data(fp):
     #for use with queue and delay data
-    #sort all metric data from same tsc_id 
+    #sort all metric data from same tsc_id
     if not os.path.exists(fp):
         assert 0, 'Supplied path '+str(fp)+' does not exist.'
 
-    tsc_data = {tsc_id:sorted(os.listdir(fp+'/'+tsc_id)) 
+    tsc_data = {tsc_id:sorted(os.listdir(fp+'/'+tsc_id))
                     for tsc_id in os.listdir(fp)}
     sim_runs_data = []
 
@@ -234,7 +234,7 @@ def get_metric_data(fp):
     k = list(tsc_data.keys())[0]
     while len(tsc_data[k]) > 0:
         #get file path for each intersection from same sim run
-        same_run_data = [ fp+'/'+tsc_id+'/'+tsc_data[tsc_id].pop(0) 
+        same_run_data = [ fp+'/'+tsc_id+'/'+tsc_data[tsc_id].pop(0)
                           for tsc_id in tsc_data ]
         same_run_data = [ load_data(f) for f in same_run_data ]
         #sum across time axis, each element of array
@@ -261,7 +261,7 @@ def graph_individual_intersections(labels, colours, fp, metrics, save_dir):
     #rows are metrics
     #columns are intersections
 
-    tsc = os.listdir(fp)                          
+    tsc = os.listdir(fp)
     tsc.remove('sotl')
     intersections = os.listdir(fp+tsc[0]+'/'+metrics[0]+'/')
     ncols = len(intersections)
@@ -289,10 +289,10 @@ def graph_individual_intersections(labels, colours, fp, metrics, save_dir):
             else:
                 ytitle = m.capitalize()+r" $(s)$" if c == 0 else ''
             legend = (0.59, 0.6)
-                
-            data_order = sorted(data.keys())               
-            alias_p = 60 
-            order_data = [ data[d][I] for d in data_order]     
+
+            data_order = sorted(data.keys())
+            alias_p = 60
+            order_data = [ data[d][I] for d in data_order]
 
             order_labels = [ labels[d] for d in data_order]
             order_colors = [ colours[d] for d in data_order]
@@ -307,9 +307,9 @@ def graph_individual_intersections(labels, colours, fp, metrics, save_dir):
                    grid=True)
             ax[r,c].set_xlim(left=0)
             ax[r,c].set_ylim(bottom=0)
-    f.suptitle('Intersection Measures of Effectiveness')                                             
+    f.suptitle('Intersection Measures of Effectiveness')
     save_graph(f, save_dir+'intersection_moe.pdf', 600, 14, 24.9)
-    plt.show() 
+    plt.show()
 
 def alias(data, a):
     n = data.shape[-1]

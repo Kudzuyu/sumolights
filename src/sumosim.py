@@ -20,7 +20,7 @@ class SumoSim:
         self.cfg_fp = cfg_fp
         self.sim_len = sim_len
         self.tsc = tsc
-        self.sumo_cmd = 'sumo' if nogui else 'sumo-gui' 
+        self.sumo_cmd = 'sumo' if nogui else 'sumo-gui'
         self.netdata = netdata
         self.args = args
         self.idx = idx
@@ -46,16 +46,16 @@ class SumoSim:
         self.v_travel_times = {}
         self.vehiclegen = None
         if self.args.sim == 'double' or self.args.sim == 'single':
-            self.vehiclegen = VehicleGen(self.netdata, 
-                                         self.args.sim_len, 
-                                         self.args.demand, 
+            self.vehiclegen = VehicleGen(self.netdata,
+                                         self.args.sim_len,
+                                         self.args.demand,
                                          self.args.scale,
-                                         self.args.mode, self.conn) 
+                                         self.args.mode, self.conn)
 
     def serverless_connect(self):
-        traci.start([self.sumo_cmd, 
-                     "-c", self.cfg_fp, 
-                     "--no-step-log", 
+        traci.start([self.sumo_cmd,
+                     "-c", self.cfg_fp,
+                     "--no-step-log",
                      "--no-warnings",
                      "--random"])
 
@@ -63,7 +63,7 @@ class SumoSim:
         sumoBinary = checkBinary(self.sumo_cmd)
         port = self.args.port+self.idx
         sumo_process = subprocess.Popen([sumoBinary, "-c",
-                                         self.cfg_fp, "--remote-port",      
+                                         self.cfg_fp, "--remote-port",
                                          str(port), "--no-warnings",
                                          "--no-step-log", "--random"],
                                          stdout=None, stderr=None)
@@ -77,7 +77,7 @@ class SumoSim:
 
         tl_juncs = set(trafficlights).intersection( set(junctions) )
         tls = []
-     
+
         #only keep traffic lights with more than 1 green phase
         for tl in tl_juncs:
             #subscription to get traffic light phases
@@ -88,7 +88,7 @@ class SumoSim:
             #for some reason this throws errors for me in SUMO 1.2
             #have to do subscription based above
             '''
-            logic = self.conn.trafficlight.getCompleteRedYellowGreenDefinition(tl)[0] 
+            logic = self.conn.trafficlight.getCompleteRedYellowGreenDefinition(tl)[0]
             '''
             #get only the green phases
             green_phases = [ p.state for p in logic.getPhases()
@@ -98,27 +98,28 @@ class SumoSim:
                 tls.append(tl)
 
         #for some reason these intersections cause problems with tensorflow
-        #I have no idea why, it doesn't make any sense, if you don't believe me 
+        #I have no idea why, it doesn't make any sense, if you don't believe me
         #then comment this and try it, if you an fix it you are the real MVP
         if self.args.sim == 'lust':
             lust_remove = ['-12', '-78', '-2060']
             for r in lust_remove:
                 if r in tls:
                     tls.remove(r)
-        return set(tls) 
+        return set(tls)
 
 
     def create_tsc(self, rl_stats, exp_replays, eps, neural_networks = None):
-        self.tl_junc = self.get_traffic_lights() 
+        self.tl_junc = self.get_traffic_lights()
         if not neural_networks:
             neural_networks = {tl:None for tl in self.tl_junc}
         #create traffic signal controllers for the junctions with lights
-        self.tsc = { tl:tsc_factory(self.args.tsc, tl, self.args, self.netdata, rl_stats[tl], exp_replays[tl], neural_networks[tl], eps, self.conn)  
-                     for tl in self.tl_junc }
+        self.tsc = {tl:tsc_factory(self.args.tsc, tl, self.args, self.netdata,
+                                   rl_stats[tl], exp_replays[tl], neural_networks[tl], eps, self.conn)
+                     for tl in self.tl_junc}
 
     def update_netdata(self):
         tl_junc = self.get_traffic_lights()
-        tsc = { tl:TrafficSignalController(self.conn, tl, self.args.mode, self.netdata, 2, 3)  
+        tsc = { tl:TrafficSignalController(self.conn, tl, self.args.mode, self.netdata, 2, 3)
                      for tl in tl_junc }
 
         for t in tsc:

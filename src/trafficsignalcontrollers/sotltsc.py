@@ -19,7 +19,7 @@ class SOTLTSC(TrafficSignalController):
         self.theta = theta
         self.omega = omega
         self.mu = mu
-        self.kappa = 0 
+        self.kappa = 0
         self.data = None
         self.phase_idx = 0
         self.time_in_phase = 0
@@ -27,10 +27,10 @@ class SOTLTSC(TrafficSignalController):
         self.phase_deque = deque([self.green_phases[self.phase_idx]])
 
     def next_phase(self):
-        #stay in green phase for 
+        #stay in green phase for
         #minimum amount of time
         if len(self.phase_deque) == 0:
-            if self.time_in_phase >= self.g_min:                                       
+            if self.time_in_phase >= self.g_min:
                 n = self.approaching_vehicles()
                 #if too many vehicles approaching green or no vehicles, go straight to kappa check
                 if n > self.mu or n == 0:
@@ -53,15 +53,15 @@ class SOTLTSC(TrafficSignalController):
 
                     #else:
                     #    print('holding on ' +str(self.id))
-                '''                                                                   
-            next_green = self.green_phases[self.phase_idx%len(self.green_phases)] 
-            phases = self.get_intermediate_phases(self.phase, next_green)            
-            self.phase_deque.extend(phases+[next_green])                             
+                '''
+            next_green = self.green_phases[self.phase_idx%len(self.green_phases)]
+            phases = self.get_intermediate_phases(self.phase, next_green)
+            self.phase_deque.extend(phases+[next_green])
 
         next_phase = self.phase_deque.popleft()
         if next_phase is not self.phase:
             self.time_in_phase = 0
-        return next_phase 
+        return next_phase
 
     def next_phase_duration(self):
         if self.phase in self.green_phases:
@@ -72,8 +72,8 @@ class SOTLTSC(TrafficSignalController):
             return self.red_t
 
     def update(self, data):
-        self.data = data 
-        
+        self.data = data
+
         self.time_in_phase += 1
         g = self.green_phases[self.phase_idx%len(self.green_phases)]
         #vehicle time integral, used to control
@@ -105,5 +105,3 @@ class SOTLTSC(TrafficSignalController):
                 if approaching_v > self.mu:
                     break
         return approaching_v
-
-        

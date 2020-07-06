@@ -17,46 +17,36 @@ class DDPGCriticNet:
             self.input = tf.compat.v1.placeholder(tf.float32,
                                         shape=[None, input_d],
                                         name='inputs')
-                                                                                                                  
+
             self.actions = tf.compat.v1.placeholder(tf.float32,
                                           shape=[None, output_d],
                                           name='actions')
-                                                                                                                  
+
             self.q_target = tf.compat.v1.placeholder(tf.float32,
                                            shape=[None,1],
                                            name='targets')
-                                                                                                                  
+
             dense1 = tf.compat.v1.layers.dense(self.input, units=hidden_d[0],
                                      kernel_initializer=he_uniform())
             batch1 = tf.compat.v1.layers.batch_normalization(dense1)
             layer1_activation = tf.nn.elu(batch1)
-                                                                                                                  
+
             dense2 = tf.compat.v1.layers.dense(layer1_activation, units=hidden_d[1],
                                      kernel_initializer=he_uniform())
             batch2 = tf.compat.v1.layers.batch_normalization(dense2)
             layer2_activation = tf.nn.elu(batch2)
-                                                                                                                  
-            '''
-            action_in = tf.compat.v1.layers.dense(self.actions, units=hidden_d[1],
-                                        activation='elu')
-            state_actions = tf.add(batch2, action_in)
-            state_actions = tf.nn.elu(state_actions)
-            self.q = tf.compat.v1.layers.dense(state_actions, units=1,
-                               kernel_initializer=he_uniform(),
-                               kernel_regularizer=tf.keras.regularizers.l2(0.01))
 
-            '''
             state_actions = tf.concat( [layer2_activation, self.actions], axis=-1 )
 
             dense3 = tf.compat.v1.layers.dense(state_actions, units=hidden_d[1],
                                      kernel_initializer=he_uniform())
             batch3 = tf.compat.v1.layers.batch_normalization(dense3)
             layer3_activation = tf.nn.elu(batch3)
-                                                                                                                  
+
             self.q = tf.compat.v1.layers.dense(layer3_activation, units=1,
                                kernel_initializer=he_uniform(),
                                kernel_regularizer=tf.keras.regularizers.l2(0.01))
-                                                                                                                  
+
             self.loss = tf.compat.v1.losses.mean_squared_error(self.q_target, self.q)
 
             self.params = tf.compat.v1.trainable_variables(scope=name)
@@ -68,6 +58,7 @@ class DDPGCriticNet:
             #saving stuff
             self.varstate = VariableState(sess, self.params)
 
+
 class DDPGCritic(NeuralNet):
     def __init__(self, input_d, hidden_d, hidden_act, output_d, output_act, lr, lre, tau, learner=False, name='', sess=None):
         self.sess=sess
@@ -76,10 +67,10 @@ class DDPGCritic(NeuralNet):
         self.lre = lre
         super().__init__(input_d, hidden_d, hidden_act, output_d, output_act, learner=learner)
         self.tau = tau
-        
+
         self.new_w = []
         self.varstate = {}
-            
+
         if learner:
             self.update_critic = [self.models['target'].params[i].assign(
                                   tf.multiply(self.models['online'].params[i], self.tau)
@@ -87,7 +78,8 @@ class DDPGCritic(NeuralNet):
                                   for i in range(len(self.models['target'].params))]
 
     def create_model(self, input_d, hidden_d, hidden_act, output_d, output_act):
-        return DDPGCriticNet(input_d, hidden_d, hidden_act, output_d, output_act, self.lr, self.lre, self.name, self.sess)
+        return DDPGCriticNet(input_d, hidden_d, hidden_act, output_d, output_act,
+                             self.lr, self.lre, self.name, self.sess)
 
     def gradients(self, states, actions):
         return self.sess.run(self.models['online'].action_gradients,
@@ -123,7 +115,7 @@ class DDPGCritic(NeuralNet):
         save_data(path+fname+'.p', weights)
 
     def load_weights(self, path):
-        path += '.p' 
+        path += '.p'
         if os.path.exists(path):
             weights = load_data(path)
             self.set_weights(weights, 'online')
@@ -140,9 +132,9 @@ if __name__ == '__main__':
     tau = 0.005
     learner = True
     name = 'tsc0'
-    ddpg = DDPGCritic(input_d, hidden_d, 'relu', output_d, 'tanh', lr, lre, tau, learner=learner, name=name, sess=None)
+    ddpg = DDPGCritic(input_d, hidden_d, 'relu', output_d, 'tanh',
+                      lr, lre, tau, learner=learner, name=name, sess=None)
     weights = ddpg.get_weights('online')
     print(type(weights))
     print(weights)
     print(weights[0])
-

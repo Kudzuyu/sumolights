@@ -88,7 +88,7 @@ class DelayMetric(TrafficMetric):
         delay = 0
         for v in remove_vehicles:
             del self.v_info[v]
-        
+
         self.old_v = new_v
         self.t += 1
 

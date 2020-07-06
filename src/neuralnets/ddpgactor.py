@@ -16,11 +16,11 @@ class DDPGActorNet:
             self.input = tf.compat.v1.placeholder(tf.float32,
                                         shape=[None, input_d],
                                         name='inputs')
-                                                                                                     
+
             self.action_gradient = tf.compat.v1.placeholder(tf.float32,
                                           shape=[None, output_d],
                                           name='gradients')
-                                                                                                     
+
             dense1 = tf.compat.v1.layers.dense(self.input, units=hidden_d[0],
                                      kernel_initializer=he_uniform())
 
@@ -36,21 +36,24 @@ class DDPGActorNet:
                             kernel_initializer=he_uniform())
 
             self.mu = mu
-                                                                                                     
+
             self.params = tf.compat.v1.trainable_variables(scope=name)
             #print(name)
 
-            self.unnormalized_actor_gradients = tf.gradients(self.mu, self.params, -self.action_gradient, unconnected_gradients='zero')
-            
-            self.actor_gradients = list(map(lambda x: tf.math.divide(x, batch_size), self.unnormalized_actor_gradients))
-                                                                                                    
-            self.optimize = tf.compat.v1.train.AdamOptimizer(learning_rate = lr, epsilon=lre).apply_gradients(zip(self.actor_gradients, self.params))
+            self.unnormalized_actor_gradients = tf.gradients(self.mu, self.params,
+                                                             -self.action_gradient, unconnected_gradients='zero')
+
+            self.actor_gradients = list(map(lambda x: tf.math.divide(x, batch_size),
+                                            self.unnormalized_actor_gradients))
+
+            self.optimize = tf.compat.v1.train.AdamOptimizer(learning_rate = lr,epsilon=lre).apply_gradients(zip(self.actor_gradients, self.params))
 
             #for training/saving
             self.varstate = VariableState(sess, self.params)
 
 class DDPGActor(NeuralNet):
-    def __init__(self, input_d, hidden_d, hidden_act, output_d, output_act, lr, lre, tau, learner=False, name='', batch_size=32, sess=None):
+    def __init__(self, input_d, hidden_d, hidden_act, output_d, output_act,
+                 lr, lre, tau, learner=False, name='', batch_size=32, sess=None):
         self.lr = lr
         self.lre = lre
         self.sess = sess
@@ -67,7 +70,8 @@ class DDPGActor(NeuralNet):
                                  for i in range(len(self.models['target'].params))]
 
     def create_model(self, input_d, hidden_d, hidden_act, output_d, output_act):
-        return DDPGActorNet(input_d, hidden_d, hidden_act, output_d, output_act, self.lr, self.lre, self.name, self.batch_size, self.sess)
+        return DDPGActorNet(input_d, hidden_d, hidden_act, output_d, output_act,
+                            self.lr, self.lre, self.name, self.batch_size, self.sess)
 
     def forward(self, x, nettype):
         return self.sess.run(self.models[nettype].mu, feed_dict={self.models[nettype].input: x})

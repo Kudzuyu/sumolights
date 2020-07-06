@@ -1,7 +1,8 @@
 import numpy as np
 
 class RLAgent:
-    def __init__(self, networks, epsilon, exp_replay, n_actions, n_steps, n_batch, n_exp_replay, gamma, rl_stats, mode, updates):
+    def __init__(self, networks, epsilon, exp_replay, n_actions, n_steps,
+                 n_batch,n_exp_replay, gamma, rl_stats, mode, updates):
         ###this is a dict, keys = 'online', 'target'
         self.networks = networks
         self.epsilon = epsilon
@@ -18,18 +19,18 @@ class RLAgent:
         self.updates = updates
 
     def get_action(self, state):
-       pass 
+       pass
 
     def store_experience(self, state, action, next_state, reward, terminal):
-        ### here we append to a temporary experience sequence/trajectory buffer, 
+        ### here we append to a temporary experience sequence/trajectory buffer,
         #and when terminal or steps length, at to experience replay
         if self.rl_stats['updates'] < self.updates:
-            experience = {'s':state, 'a':action,                                     
+            experience = {'s':state, 'a':action,
                           'next_s':next_state, 'r':reward, 'terminal':terminal}
-                                                                                     
+
             #append experience to trajectory
             self.experience_trajectory.append(experience)
-                                                                                    
+
             ###check if need to add trajectory to exp replay
             if len(self.experience_trajectory) == self.n_steps or terminal == True:
                 self.exp_replay.append(self.experience_trajectory)
@@ -46,7 +47,7 @@ class RLAgent:
         pass
 
     def process_batch(self, sample_batch):
-        pass 
+        pass
 
     def process_trajectory(self):
         pass
@@ -77,4 +78,3 @@ class RLAgent:
 
     def retrieve_weights(self):
         pass
-

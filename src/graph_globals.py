@@ -13,10 +13,10 @@ def global_params():
     big = 5*scale
     med = 3.5*scale
     small = 2*scale
-    
-    plt.rcParams["font.family"] = "FreeSerif" 
-    plt.rcParams["font.size"] = small 
-    
+
+    plt.rcParams["font.family"] = "FreeSerif"
+    plt.rcParams["font.size"] = small
+
     plt.rcParams['mathtext.fontset'] = 'stix'
     matplotlib.rc('axes', titlesize=med)
     matplotlib.rc('axes', labelsize=small)

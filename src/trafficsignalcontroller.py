@@ -33,9 +33,9 @@ class TrafficSignalController:
         self.phase_lanes = self.phase_lanes(self.green_phases)
         #create subscription for this traffic signal junction to gather
         #vehicle information efficiently
-        self.conn.junction.subscribeContext(tsc_id, traci.constants.CMD_GET_VEHICLE_VARIABLE, 150, 
-                                        [traci.constants.VAR_LANEPOSITION, 
-                                        traci.constants.VAR_SPEED, 
+        self.conn.junction.subscribeContext(tsc_id, traci.constants.CMD_GET_VEHICLE_VARIABLE, 150,
+                                        [traci.constants.VAR_LANEPOSITION,
+                                        traci.constants.VAR_SPEED,
                                         traci.constants.VAR_LANE_ID])
         #get all incoming lanes to intersection
         self.incoming_lanes = set()
@@ -45,7 +45,8 @@ class TrafficSignalController:
 
         self.incoming_lanes = sorted(list(self.incoming_lanes))
         #lane capacity is the lane length divided by the average vehicle length+stopped headway
-        self.lane_capacity = np.array([float(self.netdata['lane'][lane]['length'])/7.5 for lane in self.incoming_lanes])
+        self.lane_capacity = np.array([float(self.netdata['lane'][lane]['length'])/7.5
+                                       for lane in self.incoming_lanes])
         #for collecting various traffic metrics at the intersection
         #can be extended in trafficmetric.py class to collect new metrics
         if mode == 'train':
@@ -55,7 +56,7 @@ class TrafficSignalController:
         self.trafficmetrics = TrafficMetrics(tsc_id, self.incoming_lanes, netdata, self.metric_args, mode)
 
         self.ep_rewards = []
-        
+
     def run(self):
         data = self.get_subscription_data()
         self.trafficmetrics.update(data)
@@ -67,7 +68,7 @@ class TrafficSignalController:
             metric = self.trafficmetrics.get_metric(m)
 
     def get_traffic_metrics_history(self):
-        return {m:self.trafficmetrics.get_history(m) for m in self.metric_args} 
+        return {m:self.trafficmetrics.get_history(m) for m in self.metric_args}
 
     def increment_controller(self):
         if self.phase_time == 0:
@@ -87,20 +88,20 @@ class TrafficSignalController:
 
     def next_phase(self):
         raise NotImplementedError("Subclasses should implement this!")
-        
+
     def next_phase_duration(self):
         raise NotImplementedError("Subclasses should implement this!")
 
     def update(self, data):
         """Implement this function to perform any
-           traffic signal class specific control/updates 
+           traffic signal class specific control/updates
         """
         raise NotImplementedError("Subclasses should implement this!")
 
     def get_subscription_data(self):
         #use SUMO subscription to retrieve vehicle info in batches
         #around the traffic signal controller
-        tl_data = self.conn.junction.getContextSubscriptionResults(self.id)                          
+        tl_data = self.conn.junction.getContextSubscriptionResults(self.id)
         #create empty incoming lanes for use else where
         lane_vehicles = {l:{} for l in self.incoming_lanes}
         if tl_data is not None:
@@ -108,19 +109,19 @@ class TrafficSignalController:
                 lane = tl_data[v][traci.constants.VAR_LANE_ID]
                 if lane not in lane_vehicles:
                     lane_vehicles[lane] = {}
-                lane_vehicles[lane][v] = tl_data[v] 
+                lane_vehicles[lane][v] = tl_data[v]
         return lane_vehicles
 
     def get_tl_green_phases(self):
         logic = self.conn.trafficlight.getCompleteRedYellowGreenDefinition(self.id)[0]
         #get only the green phases
-        green_phases = [ p.state for p in logic.getPhases() 
-                         if 'y' not in p.state 
+        green_phases = [ p.state for p in logic.getPhases()
+                         if 'y' not in p.state
                          and ('G' in p.state or 'g' in p.state) ]
 
         #sort to ensure parity between sims (for RL actions)
         return sorted(green_phases)
-    
+
     def phase_lanes(self, actions):
         phase_lanes = {a:[] for a in actions}
         for a in actions:
@@ -142,7 +143,7 @@ class TrafficSignalController:
 
     #helper functions for rl controllers
     def input_to_one_hot(self, phases):
-        identity = np.identity(len(phases))                                 
+        identity = np.identity(len(phases))
         one_hots = { phases[i]:identity[i,:]  for i in range(len(phases)) }
         return one_hots
 
@@ -150,7 +151,7 @@ class TrafficSignalController:
         return { p:phases[p] for p in range(len(phases)) }
 
     def get_state(self):
-        #the state is the normalized density of all incoming lanes 
+        #the state is the normalized density of all incoming lanes
         return np.concatenate([self.get_normalized_density(), self.get_normalized_queue()])
 
     def get_normalized_density(self):
@@ -186,7 +187,7 @@ class TrafficSignalController:
 
     def empty_dtse(n_lanes, dist, cell_size):
         return np.zeros((n_lanes, int(dist/cell_size)+3 ))
-    
+
     def phase_dtse(phase_lanes, lane_to_int, dtse):
         phase_dtse = {}
         for phase in phase_lanes:
@@ -205,41 +206,3 @@ class TrafficSignalController:
                 dtse[i, pos:pos+1] = 1.0
 
         return dtse
-
-'''
-right_on_red_phases = []
-for phase in green_phases:
-    new_phase = []
-    for idx in range(len(phase)):
-        if self.netdata['inter'][self.id]['tlsindexdir'][idx] == 'r' and phase[idx] == 'r':
-            new_phase.append('s')
-        else:
-            new_phase.append(phase[idx])
-    right_on_red_phases.append(''.join(new_phase))
-'''
-
-'''
-n_g = len(green_phases)
-                                                                                            
-right_on_red_phases = []
-for phase in green_phases:
-    new_phase = []
-    for idx in range(len(phase)):
-        if self.netdata['inter'][self.id]['tlsindexdir'][idx] == 'r' and phase[idx] == 'r':
-            new_phase.append('s')
-        else:
-            new_phase.append(phase[idx])
-    right_on_red_phases.append(''.join(new_phase))
-                                                                                            
-green_phases = [ p for p in right_on_red_phases 
-                 if 'y' not in p
-                 and ('G' in p or 'g' in p) ]
-'''
-'''
-n_ror = len(ror_phases)
-if n_ror != n_g:
-    print('==========')
-    print(self.id)
-    print(green_phases)
-    print(ror_phases)
-'''

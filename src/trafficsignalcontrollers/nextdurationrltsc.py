@@ -40,10 +40,10 @@ class NextDurationRLTSC(TrafficSignalController):
                     terminal = False
                     self.store_experience(state, terminal)
                 if not self.acting:
-                    state = np.concatenate( [self.get_state(), self.phase_to_one_hot[phase]] ) 
-                self.s = state                                                                         
-                action = self.rlagent.get_action(state)                                                       
-                self.a = action                                                                        
+                    state = np.concatenate( [self.get_state(), self.phase_to_one_hot[phase]] )
+                self.s = state
+                action = self.rlagent.get_action(state)
+                self.a = action
                 self.acting = True
                 return phase
             i += 1
@@ -56,7 +56,7 @@ class NextDurationRLTSC(TrafficSignalController):
             terminal = True
             self.store_experience(state, terminal)
             self.acting = False
-        return phase 
+        return phase
 
     def next_phase_duration(self):
         if self.phase in self.green_phases:

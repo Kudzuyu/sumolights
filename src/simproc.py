@@ -27,7 +27,7 @@ class SimProc(Process):
         self.exp_replays = exp_replays
         self.eps = eps
         self.offset = offset
-        self.initial = True 
+        self.initial = True
 
     def run(self):
         learner = False
@@ -36,9 +36,9 @@ class SimProc(Process):
         else:
             load = False
 
-        neural_networks = gen_neural_networks(self.args, 
-                                              self.netdata, 
-                                              self.args.tsc, 
+        neural_networks = gen_neural_networks(self.args,
+                                              self.netdata,
+                                              self.args.tsc,
                                               self.netdata['inter'].keys(),
                                               learner,
                                               load,
@@ -85,10 +85,13 @@ class SimProc(Process):
             #if the initial sim, run until the offset time reached
             self.initial = False
             self.sim.run_offset(self.offset)
-            print(str(self.idx)+' train  waiting at offset ------------- '+str(self.offset)+' at '+str(get_time_now()))
-            write_to_log(' ACTOR #'+str(self.idx)+' FINISHED RUNNING OFFSET '+str(self.offset)+' to time '+str(self.sim.t)+' , WAITING FOR OTHER OFFSETS...')
+            print(str(self.idx)+' train  waiting at offset ------------- '+\
+                  str(self.offset)+' at '+str(get_time_now()))
+            write_to_log(' ACTOR #'+str(self.idx)+' FINISHED RUNNING OFFSET '+\
+                         str(self.offset)+' to time '+str(self.sim.t)+' , WAITING FOR OTHER OFFSETS...')
             self.barrier.wait()
-            print(str(self.idx)+' train  broken offset =================== '+str(self.offset)+' at '+str(get_time_now()))
+            print(str(self.idx)+' train  broken offset =================== '+\
+                  str(self.offset)+' at '+str(get_time_now()))
             write_to_log(' ACTOR #'+str(self.idx)+'  BROKEN OFFSET BARRIER...')
 
         self.sim.create_tsc(self.rl_stats, self.exp_replays, self.eps, neural_networks)
@@ -107,7 +110,7 @@ class SimProc(Process):
         fname = get_time_now()
         #write all metrics to correct path
         #path = 'metrics/'+str(self.args.tsc)
-        path = 'metrics/'+str(self.args.tsc) 
+        path = 'metrics/'+str(self.args.tsc)
         for tsc in tsc_metrics:
             for m in tsc_metrics[tsc]:
                 mpath = path + '/'+str(m)+'/'+str(tsc)+'/'
@@ -118,7 +121,7 @@ class SimProc(Process):
         path += '/traveltime/'
         check_and_make_dir(path)
         save_data(path+fname+'.p', travel_times)
-        
+
     '''
     def write_ep_return(self):
         #if rl, only print returns of best
@@ -143,7 +146,7 @@ class SimProc(Process):
                 return False
         return True
     '''
-  
+
     def finished_updates(self):
         for tsc in self.netdata['inter'].keys():
             print(tsc+'  exp replay size '+str(len(self.exp_replays[tsc])))
@@ -164,64 +167,3 @@ class SimProc(Process):
                 #raise not found exceptions
                 assert 0, 'Supplied RL traffic signal controller '+str(self.args.tsc)+' does not exist.'
         return neural_networks
-    '''
-    def get_neural_networks(self, tsctype, tsc_ids):                                                      
-        neural_nets = {}                                                                                    
-        if tsctype == 'dqn' or tsctype == 'ddpg':                                                           
-            for tsc in tsc_ids:                                                                             
-                input_d, output_d = get_in_out_d(tsctype,                                                    
-                                                 len(self.netdata['inter'][tsc]['incoming_lanes']),          
-                                                 len(self.netdata['inter'][tsc]['green_phases']))            
-                                                                                                            
-                learner = False                                                                             
-                neural_nets[tsc] = nn_factory(self.args.tsc, input_d, output_d, self.args, learner) 
-        return neural_nets                                                                                  
-    '''
-    '''
-    def run(self):
-        #run simulation
-        sumo_cmd = 'sumo' if self.args.nogui else 'sumo-gui'
-        self.conn.start([sumo_cmd, "-c", self.args.cfg_fp, "--no-step-log", "--random"])
-
-
-        self.lanes = self.conn.lane.getIDList()
-        #traffic lights
-        trafficlights = self.conn.trafficlight.getIDList()
-        junctions = self.conn.junction.getIDList()
-        tl_junc = set(trafficlights).intersection( set(junctions) )
-
-        #create traffic signal controllers
-        tsc = {tl:WebstersTSC(tl, self.netdata, self.args.y, self.args.r, self.get_tl_green_phases(tl), self.args.g_min, self.args.c_min, self.args.c_max, self.args.sat_flow, self.args.update_freq) for tl in tl_junc}
-
-        #setup subscription for stats
-        for tl in tl_junc:
-            self.conn.junction.subscribeContext( tl, traci.constants.CMD_GET_VEHICLE_VARIABLE, 150, [traci.constants.VAR_LANEPOSITION, traci.constants.VAR_SPEED, traci.constants.VAR_LANE_ID])
-
-        start_t = time.time()
-        #execute simulation for desired length
-        while self.t < self.args.sim_len:
-            data = self.get_intersection_subscription(tl_junc)
-            for t in tsc:
-                tsc[t].update(data)
-                tsc[t].run()
-            self.conn.simulationStep()
-            self.t += 1
-        print('sim time '+str(time.time()-start_t))
-
-        self.conn.close()
-
-    def get_intersection_subscription(self, tls):
-        tl_data = {}
-        lane_vehicles = { l:{} for l in self.lanes}
-        #print('----------')
-        for tl in tls:
-            tl_data[tl] = self.conn.junction.getContextSubscriptionResults(tl)
-            if tl_data[tl] is not None:
-                for v in tl_data[tl]:
-                    lane_vehicles[ tl_data[tl][v][traci.constants.VAR_LANE_ID] ][v] = tl_data[tl][v]
-        return lane_vehicles
-
-    def get_tl_green_phases(self, tl):
-        logic = self.conn.trafficlight.getCompleteRedYellowGreenDefinition(tl)[0]
-        return [ p.state for p in logic.getPhases() if 'y' not in p.state]
-    '''

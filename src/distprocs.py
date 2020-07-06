@@ -10,17 +10,19 @@ from src.sumosim import SumoSim
 
 import numpy as np
 
+
 def get_sim(sim_str):
-    if sim_str == 'lust':                                        
-        cfg_fp = 'networks/lust/scenario/dua.actuated.sumocfg'     
-        net_fp = 'networks/lust/scenario/lust.net.xml'               
-    elif sim_str == 'single':                                       
-        cfg_fp = 'networks/single.sumocfg'                         
-        net_fp = 'networks/single.net.xml'                           
-    elif sim_str == 'double':                                       
-        cfg_fp = 'networks/double.sumocfg'                         
-        net_fp = 'networks/double.net.xml'                           
-    return cfg_fp, net_fp                                           
+    if sim_str == 'lust':
+        cfg_fp = 'networks/lust/scenario/dua.actuated.sumocfg'
+        net_fp = 'networks/lust/scenario/lust.net.xml'
+    elif sim_str == 'single':
+        cfg_fp = 'networks/single.sumocfg'
+        net_fp = 'networks/single.net.xml'
+    elif sim_str == 'double':
+        cfg_fp = 'networks/double.sumocfg'
+        net_fp = 'networks/double.net.xml'
+    return cfg_fp, net_fp
+
 
 class DistProcs:
     def __init__(self, args, tsc, mode):
@@ -74,7 +76,7 @@ class DistProcs:
 
         tsc_ids = netdata['inter'].keys()
 
-        #create mp dict for sharing 
+        #create mp dict for sharing
         #reinforcement learning stats
         rl_stats = self.create_mp_stats_dict(tsc_ids)
         exp_replays = self.create_mp_exp_replay(tsc_ids)
@@ -85,7 +87,8 @@ class DistProcs:
         print(offsets)
 
         #create sumo sim procs to generate experiences
-        sim_procs = [ SimProc(i, args, barrier, netdata, rl_stats, exp_replays, eps_rates[i], offsets[i]) for i in range(args.n)]
+        sim_procs = [SimProc(i, args, barrier, netdata,rl_stats,
+                             exp_replays, eps_rates[i], offsets[i]) for i in range(args.n)]
 
         #create learner procs which are assigned tsc/rl agents
         #to compute neural net updates for
@@ -94,7 +97,8 @@ class DistProcs:
             print('===========LEARNER AGENTS')
             for l in learner_agents:
                 print('============== '+str(l))
-            learner_procs = [ LearnerProc(i, args, barrier, netdata, learner_agents[i], rl_stats, exp_replays) for i in range(args.l)]
+            learner_procs = [LearnerProc(i, args, barrier, netdata, learner_agents[i],
+                                         rl_stats, exp_replays) for i in range(args.l)]
         else:
             learner_procs = []
 
@@ -105,10 +109,10 @@ class DistProcs:
 
     def run(self):
         print('Starting up all processes...')
-        ###start everything   
+        ###start everything
         for p in self.procs:
             p.start()
-                              
+
         ###join when finished
         for p in self.procs:
             p.join()
@@ -135,13 +139,13 @@ class DistProcs:
         return rl_stats
 
     def create_mp_exp_replay(self, tsc_ids):
-        ###create shared memory for experience replay 
+        ###create shared memory for experience replay
         #(governs agents appending and learners accessing and deleting)
         manager = Manager()
         return manager.dict({ tsc: manager.list() for tsc in tsc_ids })
 
     def assign_learner_agents(self, agents, n_learners):
-        learner_agents = [ [] for _ in range(n_learners)]
+        learner_agents = [[] for _ in range(n_learners)]
         for agent, i in zip(agents, range(len(agents))):
             learner_agents[i%n_learners].append(agent)
         ##list of lists, each sublit is the agents a learner is responsible for
@@ -159,10 +163,10 @@ class DistProcs:
                     erates.append(e[i%len(e)])
                 return erates
             else:
-                return np.linspace(1.0, eps, num = n_actors) 
+                return np.linspace(1.0, eps, num = n_actors)
 
     def get_start_offsets(self, mode, simlen, offset, n_actors):
         if mode == 'test':
-            return [0]*n_actors
+            return [0] * n_actors
         elif mode == 'train':
-            return np.linspace(0, simlen*offset, num = n_actors) 
+            return np.linspace(0, simlen*offset, num = n_actors)

@@ -29,7 +29,7 @@ class DQN(NeuralNet):
 
     def forward(self, _input, nettype):
         return self.models[nettype].predict(_input)
-  
+
     def backward(self, _input, _target):
         self.models['online'].fit(_input, _target, batch_size = 1, epochs = 1,  verbose=0 )
 
@@ -40,14 +40,14 @@ class DQN(NeuralNet):
 
     def get_weights(self, nettype):
         return self.models[nettype].get_weights()
-                                                          
+
     def set_weights(self, weights, nettype):
         return self.models[nettype].set_weights(weights)
 
     def save_weights(self, nettype, path, fname):
         check_and_make_dir(path)
         self.models[nettype].save_weights(path+fname+'.h5', save_format='h5', overwrite='True')
-       
+
     def load_weights(self, path):
         path += '.h5'
         if os.path.exists(path):

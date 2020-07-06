@@ -4,7 +4,8 @@ from collections import deque
 from src.trafficsignalcontroller import TrafficSignalController
 
 class WebstersTSC(TrafficSignalController):
-    def __init__(self, conn, tsc_id, mode, netdata, red_t, yellow_t, g_min, c_min, c_max, sat_flow=0.38, update_freq=None):
+    def __init__(self, conn, tsc_id, mode, netdata, red_t, yellow_t,
+                 g_min, c_min, c_max, sat_flow=0.38, update_freq=None):
         super().__init__(conn, tsc_id, mode, netdata, red_t, yellow_t)
         self.cycle = self.get_phase_cycle()
         self.g_min = g_min
@@ -84,7 +85,8 @@ class WebstersTSC(TrafficSignalController):
         ##find critical 
         y_crit = []
         for g in self.green_phases:
-            sat_flows = [(self.phase_lane_counts[g][l]/self.update_freq)/(self.sat_flow) for l in self.phase_lanes[g]]
+            sat_flows = [(self.phase_lane_counts[g][l]/self.update_freq)/(self.sat_flow)
+                         for l in self.phase_lanes[g]]
             y_crit.append(max(sat_flows))
 
         #compute intersection critical lane flow rattios

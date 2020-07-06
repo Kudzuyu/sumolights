@@ -43,7 +43,7 @@ class NextPhaseRLTSC(TrafficSignalController):
             return self.red_t
 
     def get_next_phase(self):
-        #check which action lane groups 
+        #check which action lane groups
         #have vehicles
         #check if any vehicles at intersection, if yes
         if self.empty_intersection():
@@ -82,6 +82,6 @@ class NextPhaseRLTSC(TrafficSignalController):
 
     def store_experience(self, next_state, terminal):
         self.rlagent.store_experience(self.s, self.a, next_state, self.get_reward(), terminal)
-        
+
     def update(self, data):
-        self.data = data 
+        self.data = data

@@ -72,21 +72,6 @@ class MaxPressureTSC(TrafficSignalController):
             phase_pressure = [ p for p in phase_pressure if p[1] == phase_pressure[0][1] ]
             return random.choice(phase_pressure)[0]
 
-            '''
-            if len(phase_pressure) == 1:
-                return phase_pressure[0][0]
-            else:
-                #if two phases have same pressure and same number of green movements
-                green_count = [ (p[0], self.phase_g_count[p[0]]) for p in phase_pressure ]
-                green_count = sorted(green_count, key=lambda p:p[1], reverse=True)
-                green_count = [ p for p in green_count if p[1] == green_count[0][1] ]
-                if len(green_count) == 1:
-                    return green_count[0][0]
-                else:
-                    return random.choice(green_count)[0]
-            '''
-
-
     def next_phase_duration(self):
         if self.phase in self.green_phases:
             return self.green_t
@@ -96,4 +81,4 @@ class MaxPressureTSC(TrafficSignalController):
             return self.red_t
 
     def update(self, data):
-        self.data = data 
+        self.data = data

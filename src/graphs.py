@@ -11,7 +11,8 @@ import matplotlib as mpl
 #good source for fancy graphs
 #https://www.machinelearningplus.com/plots/top-50-matplotlib-visualizations-the-master-plots-python/
 
-def graph(ax, data, graph_func, xtitle=None, ytitle_pad=None, title=None, legend=None, grid=None, xlim=None, ylim=None, colours=None):
+def graph(ax, data, graph_func, xtitle=None, ytitle_pad=None,
+          title=None, legend=None, grid=None, xlim=None, ylim=None, colours=None):
     ####graph the function G
     #elements, data_labels = graph_func
     elements, labels = graph_func
@@ -19,10 +20,10 @@ def graph(ax, data, graph_func, xtitle=None, ytitle_pad=None, title=None, legend
     ###set the title and other such common elements
     if xtitle:
         ax.set_xlabel(xtitle)
-                                                                   
+
     if ytitle_pad:
         ax.set_ylabel(ytitle_pad[0], rotation=360, labelpad=ytitle_pad[1])
-                                                                   
+
     if title:
         ax.set_title(title)
 
@@ -64,7 +65,7 @@ def boxplot(ax, data, colors, data_labels):
         boxplots = np.array(bp[attr])
         ###these are doubles, because each boxplot has two of each
         boxplots = boxplots.reshape( (len(data_labels), 2) )
-        
+
         for t,c in zip(boxplots, colors):
             for b in t:
                 b.set( color=c, linewidth=2)
@@ -113,7 +114,7 @@ def scatter(ax, x, y, colors, data_labels, scatter_size=100):
 
 def get_cmap(n, name='brg'):
     #taken from https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
-    '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
+    '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct
     RGB color; the keyword argument name must be a standard mpl colormap name.'''
     return plt.cm.get_cmap(name, n)
 
@@ -127,7 +128,7 @@ def multi_histogram(ax, data, colors, data_labels, dmin, dmax, nbins):
         #offset bars for multiple histograms in same bin
         x = np.arange(len(hist))+(bwidth*i)
         #draw histo bars on graph
-        bar = ax.bar(x, hist, width=bwidth, align='edge', color=c ) 
+        bar = ax.bar(x, hist, width=bwidth, align='edge', color=c )
         bars.append(bar)
 
     #edit x-axis ticks to reflect bin edges
@@ -142,22 +143,3 @@ def save_graph(f, fname, dpi, h, w):
     f = plt.gcf()
     f.set_size_inches(w, h, forward=True)
     f.savefig(fname, dpi=dpi, bbox_inches='tight')
-
-'''
-if __name__ == '__main__':
-    global_params()
-    colors = ['b','r','g','y']
-    data_labels = ['Random', 'Actuated', 'Q-learn', 'A3C' ]
-    f, axarr = plt.subplots(1,1)
-    box_data = np.random.rand(100, 4)
-    graph( axarr, box_data, boxplot( axarr, box_data, colors, data_labels), xtitle='XTITLE' , ytitle_pad = ('YTITLE',60) , title='MAIN TITLE', legend=(0.92, 0.92), grid=True)
-    mean = [1.0, 2.0, 5.0, 2.8]
-    std = [0.2, 0.7, 0.1, 2.4]
-    data = [np.random.uniform(m,s,(30,300)) for m, s in zip(mean, std)]
-
-    f, axarr = plt.subplots(1,1)
-    graph( axarr, data, multi_line_with_CI(axarr, np.stack(data), colors, data_labels), xtitle='XTITLE' , ytitle_pad = ('YTITLE',60) , title='MAIN TITLE', legend=(0.92, 0.92), grid=True, xlim=[0.0,300.0], ylim=[0.0,4.0])
-
-    f.suptitle('Main figure title')
-    plt.show()    
-'''
